@@ -1,3 +1,6 @@
 geckodriver.log
 web.html
 moviess.json
+urls.json
+.gitignore
+movies copy.json

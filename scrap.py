@@ -28,6 +28,13 @@ def saveJson(data):
     f = open('movies.json', 'w')    
     f.write(json.dumps(data))
     f.close
+    
+def saveCurrentLink(data):
+    f = open('current.txt', 'w')
+    f.write(data)
+    f.close
+def getCurrent():
+    return open('current.txt', 'r')
 
 #f(): retrieve a list of category(movies) links
 def getWebMenuItems():
@@ -46,6 +53,7 @@ def getWebMenuItems():
             return menu_links
         except requests.exceptions.ConnectionError:
             print("Couldnt Connect Attempts: ")
+            time.sleep(5)
             continue
         else:
             break
@@ -57,6 +65,9 @@ def saveSourceFromSelenium(url):
     driver = webdriver.Firefox(options=options)
     for intentos in range(10):
         try:
+            if(url == "https://www.looke.com.br/movies/shows-para-cantar-junto"): #this actually doesnt have a content
+                driver.close()
+                break
             driver.get(url)
             wait = WebDriverWait(driver, 15) #more for slow network connections
             loading = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "media-image")))
@@ -69,11 +80,17 @@ def saveSourceFromSelenium(url):
                 max_Y = driver.execute_script('return scrollMaxY')
             time.sleep(10)
             saveWebFile(driver)
-            driver.close()
         except EX.TimeoutException:
             print("Timeout, retrying ")
+            driver.close()
+            time.sleep(5)
+            continue
+        except EX.WebDriverException:
+            print("WebDriver Error, retrying")
+            time.sleep(5)
             continue
         else:
+            driver.close()
             break
     
 #f(): scrap all urls from the movies listed in a file.html
@@ -133,36 +150,39 @@ def scrapDataMovies(url):
                 return movie
         except requests.exceptions.ConnectionError:
             print("Couldnt Connect")
+            time.sleep(5)
             continue
         else:
             break
 
 if __name__ == "__main__":
-    movies = []
+    fa = open('movies.json', 'r')
+    e = fa.read()
+    movies = json.loads(e)
     urls = []
     ROOT = "https://www.looke.com.br"
     CATEGORIAS_LINK = getWebMenuItems()
+    remaining = len(CATEGORIAS_LINK)
     for link in CATEGORIAS_LINK:
+        currentLink = link
+        print(link)
+        remaining -= 1
+        print(remaining)
         for intentos in range(10):
+            time.sleep(5)
             try:
-                print("gettin content")
                 saveSourceFromSelenium(ROOT + link)
                 urls = scrapUrlMovies()
                 for url in urls:
-                    print("scrapping from.. " + url)
                     movies.append(scrapDataMovies(url))
-                    print("status.. ok")
-                print("saving contnt")
                 saveJson(movies)
-                print("done")
             except ConnectionError:
                 print("fail gettin content, attempt ")
+                time.sleep(5)
                 continue
             else:
                 break
-        else:
-            print("We couldn't get all data from the given url, check your network")
     print("deleting duplicates..")
     unique = { each['URL'] : each for each in movies }.values()
-    saveJson(unique)
+    saveJson(list(unique))
     print("done")
