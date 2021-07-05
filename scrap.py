@@ -28,13 +28,6 @@ def saveJson(data):
     f = open('movies.json', 'w')    
     f.write(json.dumps(data))
     f.close
-    
-def saveCurrentLink(data):
-    f = open('current.txt', 'w')
-    f.write(data)
-    f.close
-def getCurrent():
-    return open('current.txt', 'r')
 
 #f(): retrieve a list of category(movies) links
 def getWebMenuItems():
@@ -156,15 +149,12 @@ def scrapDataMovies(url):
             break
 
 if __name__ == "__main__":
-    fa = open('movies.json', 'r')
-    e = fa.read()
-    movies = json.loads(e)
+    movies = []
     urls = []
     ROOT = "https://www.looke.com.br"
     CATEGORIAS_LINK = getWebMenuItems()
     remaining = len(CATEGORIAS_LINK)
     for link in CATEGORIAS_LINK:
-        currentLink = link
         print(link)
         remaining -= 1
         print(remaining)
